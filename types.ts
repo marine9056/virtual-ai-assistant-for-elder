@@ -4,12 +4,22 @@ export interface UserProfile {
   age: number;
   interests: string[];
   lastMemoryTopic?: string;
+  emergencyContact?: {
+    name: string;
+    phone: string;
+  };
+}
+
+export interface Settings {
+  fontSize: 'standard' | 'large' | 'extra-large';
+  contrast: 'normal' | 'high';
 }
 
 export interface MoodData {
   date: string;
   score: number;
   engagement: number;
+  energy?: number;
 }
 
 export interface MemoryEntry {
@@ -35,5 +45,8 @@ export enum AppState {
   DASHBOARD = 'DASHBOARD',
   COMPANION = 'COMPANION',
   REMINISCENCE = 'REMINISCENCE',
-  ROUTINE = 'ROUTINE'
+  ROUTINE = 'ROUTINE',
+  HISTORY = 'HISTORY',
+  EMERGENCY = 'EMERGENCY',
+  SETTINGS = 'SETTINGS'
 }

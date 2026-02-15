@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 import { MoodData, MemoryEntry } from '../types';
 
 interface DashboardProps {
@@ -10,96 +9,90 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ moodHistory, memories, onStartCompanion }) => {
-  const latestMood = moodHistory[moodHistory.length - 1]?.score || 0;
+  const latestMood = moodHistory[moodHistory.length - 1];
   
+  // Status Logic
+  const getMoodStatus = (score: number) => {
+    if (score >= 8) return { icon: '☀️', label: 'Sunny', color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100', desc: "You're feeling wonderful today!" };
+    if (score >= 5) return { icon: '🌤️', label: 'Fair', color: 'text-sky-600', bg: 'bg-sky-50', border: 'border-sky-100', desc: "You're doing quite well." };
+    return { icon: '☁️', label: 'Cloudy', color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-100', desc: "A bit of a quiet day." };
+  };
+
+  const status = getMoodStatus(latestMood?.score || 8);
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-12">
       {/* Welcome Hero */}
-      <div className="bg-gradient-to-r from-sky-500 to-indigo-600 rounded-3xl p-8 text-white senior-card relative overflow-hidden">
-        <div className="relative z-10">
-          <h2 className="text-3xl font-bold mb-2">How are you today?</h2>
-          <p className="text-sky-100 text-lg mb-6">Goldie is waiting to hear from you and revisit some of your favorite memories.</p>
-          <button 
-            onClick={onStartCompanion}
-            className="bg-white text-sky-600 px-8 py-3 rounded-full font-bold text-xl hover:bg-sky-50 transition-colors shadow-lg"
-          >
-            Talk with Goldie
-          </button>
-        </div>
-        <div className="absolute right-[-20px] top-[-20px] opacity-10 transform rotate-12">
-          <svg width="200" height="200" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-        </div>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Mood Trend */}
-        <div className="bg-white p-6 rounded-3xl senior-card">
-          <h3 className="text-xl font-bold text-slate-800 mb-4">Your Happiness Trend</h3>
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={moodHistory}>
-                <defs>
-                  <linearGradient id="colorMood" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="date" stroke="#94a3b8" />
-                <YAxis hide domain={[0, 10]} />
-                <Tooltip 
-                  contentStyle={{ borderRadius: '15px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                />
-                <Area type="monotone" dataKey="score" stroke="#0ea5e9" strokeWidth={3} fillOpacity={1} fill="url(#colorMood)" />
-              </AreaChart>
-            </ResponsiveContainer>
+      <div className="bg-gradient-to-br from-sky-600 to-indigo-700 rounded-[50px] p-12 text-white senior-card relative overflow-hidden shadow-2xl border-4 border-white/20">
+        <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-10">
+          <div className="text-center md:text-left flex-1">
+            <h2 className="text-6xl font-black mb-4 leading-tight">Hello there!</h2>
+            <p className="text-sky-100 text-3xl mb-10 font-medium italic">"Shall we have a nice chat today?"</p>
+            <button 
+              onClick={onStartCompanion}
+              className="bg-white text-sky-700 px-16 py-6 rounded-[35px] font-black text-4xl hover:bg-sky-50 transition-all shadow-xl active:scale-95"
+            >
+              Start Chatting
+            </button>
           </div>
-        </div>
-
-        {/* Engagement Summary */}
-        <div className="bg-white p-6 rounded-3xl senior-card">
-          <h3 className="text-xl font-bold text-slate-800 mb-4">Memory Recall Activity</h3>
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={moodHistory.slice(-7)}>
-                <XAxis dataKey="date" stroke="#94a3b8" />
-                <YAxis hide />
-                <Tooltip 
-                  cursor={{fill: '#f8fafc'}}
-                  contentStyle={{ borderRadius: '15px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                />
-                <Bar dataKey="engagement" radius={[10, 10, 0, 0]}>
-                  {moodHistory.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.engagement > 7 ? '#10b981' : '#fbbf24'} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="w-56 h-56 bg-white/20 rounded-full flex items-center justify-center animate-float backdrop-blur-md border-4 border-white/30">
+            <span className="text-9xl">😊</span>
           </div>
         </div>
       </div>
 
-      {/* Recent Memories Section */}
+      {/* Simplified Status Cards */}
       <section>
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-2xl font-bold text-slate-800">Your Memory Lane</h3>
-          <button className="text-sky-600 font-semibold hover:underline">View All</button>
+        <h3 className="text-4xl font-black text-slate-800 mb-8 px-4">Your Daily Status</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          
+          {/* Mood Card */}
+          <div className={`${status.bg} ${status.border} border-4 p-8 rounded-[45px] text-center shadow-lg transition-transform hover:scale-105`}>
+            <span className="text-8xl block mb-4">{status.icon}</span>
+            <p className="text-xl font-black text-slate-500 uppercase tracking-widest">Your Mood</p>
+            <h4 className={`text-5xl font-black ${status.color} mt-2`}>{status.label}</h4>
+            <p className="text-slate-600 text-xl font-bold mt-4">{status.desc}</p>
+          </div>
+
+          {/* Energy Card */}
+          <div className="bg-emerald-50 border-emerald-100 border-4 p-8 rounded-[45px] text-center shadow-lg transition-transform hover:scale-105">
+            <span className="text-8xl block mb-4">🔋</span>
+            <p className="text-xl font-black text-slate-500 uppercase tracking-widest">Your Energy</p>
+            <h4 className="text-5xl font-black text-emerald-600 mt-2">Strong</h4>
+            <p className="text-slate-600 text-xl font-bold mt-4">You have plenty of vitality!</p>
+          </div>
+
+          {/* Memory Strength Card */}
+          <div className="bg-indigo-50 border-indigo-100 border-4 p-8 rounded-[45px] text-center shadow-lg transition-transform hover:scale-105">
+            <span className="text-8xl block mb-4">🧠</span>
+            <p className="text-xl font-black text-slate-500 uppercase tracking-widest">Memory</p>
+            <h4 className="text-5xl font-black text-indigo-600 mt-2">Bright</h4>
+            <p className="text-slate-600 text-xl font-bold mt-4">Your stories are coming to life!</p>
+          </div>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+      </section>
+
+      {/* Recent Memories Summary */}
+      <section>
+        <div className="flex justify-between items-end mb-8 px-4">
+          <h3 className="text-4xl font-black text-slate-800">Your Storybook</h3>
+          <button className="text-sky-600 font-black text-2xl hover:underline">View All Memories ➔</button>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
           {memories.length > 0 ? (
             memories.slice(0, 3).map((memory) => (
               <div key={memory.id} className="group cursor-pointer">
-                <div className="relative aspect-video rounded-2xl overflow-hidden mb-2 senior-card">
-                  <img src={memory.imageUrl} alt={memory.title} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
-                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
+                <div className="relative aspect-[4/3] rounded-[45px] overflow-hidden mb-4 senior-card border-4 border-white shadow-xl">
+                  <img src={memory.imageUrl} alt={memory.title} className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-700" />
+                  <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors" />
                 </div>
-                <p className="font-bold text-slate-800 truncate">{memory.title}</p>
+                <p className="font-black text-slate-800 text-2xl px-4">{memory.title}</p>
               </div>
             ))
           ) : (
-            <div className="col-span-full py-12 text-center bg-slate-100 rounded-3xl border-2 border-dashed border-slate-200">
-              <p className="text-slate-500">No memories shared yet. Talk to Goldie to start!</p>
+            <div className="col-span-full py-24 text-center bg-white rounded-[50px] border-4 border-dashed border-slate-200 shadow-inner">
+              <span className="text-7xl block mb-6">📷</span>
+              <p className="text-slate-400 text-3xl font-black">Talk to Goldie to start your storybook!</p>
             </div>
           )}
         </div>
