@@ -8,12 +8,18 @@ import { AppState, UserProfile, MoodData, MemoryEntry, RoutineTask, Settings } f
 import { Icons } from './constants';
 
 const App: React.FC = () => {
+  // Persistence Keys (Scoped to deployment)
+  const PROFILE_KEY = 'goldie_profile_v1';
+  const MEMORIES_KEY = 'goldie_memories_v1';
+
   const [appState, setAppState] = useState<AppState>(AppState.AUTH);
   const [isSignUp, setIsSignUp] = useState(false);
+  
   const [profile, setProfile] = useState<UserProfile | null>(() => {
-    const saved = localStorage.getItem('goldie_profile');
+    const saved = localStorage.getItem(PROFILE_KEY);
     return saved ? JSON.parse(saved) : null;
   });
+
   const [settings, setSettings] = useState<Settings>({ fontSize: 'large', contrast: 'normal' });
   const [moodHistory, setMoodHistory] = useState<MoodData[]>([]);
   const [memories, setMemories] = useState<MemoryEntry[]>([]);
@@ -34,9 +40,19 @@ const App: React.FC = () => {
       { date: 'Sun', score: 9, engagement: 9, energy: 8 },
     ];
     setMoodHistory(initialMoods);
-    const savedMemories = localStorage.getItem('memories');
+    
+    const savedMemories = localStorage.getItem(MEMORIES_KEY);
     if (savedMemories) setMemories(JSON.parse(savedMemories));
-    if (profile) setAppState(AppState.DASHBOARD);
+
+    // Support deep linking to companion via widget
+    const urlParams = new URLSearchParams(window.location.search);
+    if (profile) {
+      if (urlParams.get('start') === 'chat') {
+        setAppState(AppState.COMPANION);
+      } else {
+        setAppState(AppState.DASHBOARD);
+      }
+    }
   }, []);
 
   const handleToggleRoutine = (id: string) => {
@@ -56,14 +72,14 @@ const App: React.FC = () => {
       emergencyContact: { name: 'Family Member', phone: '555-0199' }
     };
     setProfile(newProfile);
-    localStorage.setItem('goldie_profile', JSON.stringify(newProfile));
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(newProfile));
     setAppState(AppState.DASHBOARD);
   };
 
   const handleMemoryGenerated = (memory: MemoryEntry) => {
     const updated = [memory, ...memories];
     setMemories(updated);
-    localStorage.setItem('memories', JSON.stringify(updated));
+    localStorage.setItem(MEMORIES_KEY, JSON.stringify(updated));
   };
 
   const handleMoodAnalyzed = (mood: { joy: number, engagement: number, energy: number }) => {
@@ -71,16 +87,17 @@ const App: React.FC = () => {
     setMoodHistory(prev => [...prev.slice(1), { date: today, score: mood.joy, engagement: mood.engagement, energy: mood.energy }]);
   };
 
+  // Accessibility styling
   const fontSizeClass = settings.fontSize === 'extra-large' ? 'text-3xl' : settings.fontSize === 'large' ? 'text-2xl' : 'text-xl';
   const contrastClass = settings.contrast === 'high' ? 'bg-black text-yellow-400' : 'bg-slate-50 text-slate-900';
 
   if (appState === AppState.AUTH) {
     return (
       <div className={`min-h-screen ${contrastClass} flex items-center justify-center p-4`}>
-        <div className="max-w-md w-full bg-white rounded-[30px] sm:rounded-[40px] p-6 sm:p-10 senior-card text-center border-4 border-sky-100 shadow-2xl">
+        <div className="max-w-md w-full bg-white rounded-[30px] sm:rounded-[40px] p-6 sm:p-10 senior-card text-center border-4 border-sky-100 shadow-2xl transition-all">
           <div className="w-20 h-20 sm:w-24 sm:h-24 bg-sky-600 rounded-3xl mx-auto mb-4 sm:mb-6 flex items-center justify-center text-white text-4xl sm:text-5xl font-bold shadow-xl rotate-3">G</div>
           <h1 className="text-3xl sm:text-4xl font-black text-slate-900 mb-2">GoldenYears</h1>
-          <p className="text-slate-600 mb-8 sm:mb-10 text-lg sm:text-xl font-medium">Your daily AI companion.</p>
+          <p className="text-slate-600 mb-8 sm:mb-10 text-lg sm:text-xl font-medium">Safe & empathetic companion.</p>
           
           <div className="flex gap-2 mb-6 sm:mb-8 bg-slate-100 p-2 rounded-2xl">
             <button onClick={() => setIsSignUp(false)} className={`flex-1 py-3 rounded-xl font-black text-base sm:text-lg transition-all ${!isSignUp ? 'bg-white shadow-md text-sky-600' : 'text-slate-500'}`}>Sign In</button>
@@ -89,11 +106,11 @@ const App: React.FC = () => {
 
           <form onSubmit={handleAuthSubmit} className="space-y-4 sm:space-y-6">
             <div className="text-left">
-              <label className="block text-slate-800 font-black mb-1 sm:mb-2 text-lg sm:text-xl">{isSignUp ? 'Name' : 'Login'}</label>
-              <input type="text" placeholder={isSignUp ? "Name..." : "Login..."} className="w-full p-4 sm:p-6 rounded-2xl border-4 border-slate-200 bg-white focus:border-sky-600 outline-none text-xl sm:text-2xl text-black font-bold shadow-inner" required />
+              <label className="block text-slate-800 font-black mb-1 sm:mb-2 text-lg sm:text-xl">{isSignUp ? 'Your Name' : 'User Login'}</label>
+              <input type="text" placeholder={isSignUp ? "Enter name..." : "Login..."} className="w-full p-4 sm:p-6 rounded-2xl border-4 border-slate-200 bg-white focus:border-sky-600 outline-none text-xl sm:text-2xl text-black font-bold shadow-inner" required />
             </div>
-            <button className="w-full bg-sky-600 text-white py-4 sm:py-6 rounded-3xl font-black text-2xl sm:text-3xl hover:bg-sky-700 transition-all shadow-xl">
-              {isSignUp ? 'Create' : 'Sign In'}
+            <button className="w-full bg-sky-600 text-white py-4 sm:py-6 rounded-3xl font-black text-2xl sm:text-3xl hover:bg-sky-700 transition-all shadow-xl active:scale-95">
+              {isSignUp ? 'Join Goldie' : 'Start Session'}
             </button>
           </form>
         </div>
@@ -105,12 +122,12 @@ const App: React.FC = () => {
     return (
       <div className={`min-h-screen bg-sky-50 flex items-center justify-center p-4 ${fontSizeClass}`}>
         <div className="max-w-2xl w-full bg-white rounded-[30px] sm:rounded-[40px] p-6 sm:p-12 senior-card text-center border-4 border-sky-200">
-          <span className="text-5xl sm:text-7xl mb-4 sm:mb-6 block">👋</span>
-          <h2 className="text-3xl sm:text-5xl font-black text-slate-900 mb-4 sm:mb-6">Welcome!</h2>
-          <p className="text-xl sm:text-2xl text-slate-700 mb-8 sm:mb-12 font-medium italic">"What should I call you?"</p>
+          <span className="text-5xl sm:text-7xl mb-4 sm:mb-6 block animate-bounce">👋</span>
+          <h2 className="text-3xl sm:text-5xl font-black text-slate-900 mb-4 sm:mb-6">Hello!</h2>
+          <p className="text-xl sm:text-2xl text-slate-700 mb-8 sm:mb-12 font-medium italic leading-relaxed">"I'm Goldie, your new friend. I'd love to know what to call you?"</p>
           <div className="flex flex-col gap-4 sm:gap-6">
-            <input id="userNameInput" type="text" placeholder="Type here..." className="w-full p-6 sm:p-8 rounded-2xl sm:rounded-3xl border-4 border-sky-300 bg-white focus:border-sky-600 text-2xl sm:text-3xl text-black font-bold outline-none shadow-inner" autoFocus />
-            <button onClick={() => handleOnboarding((document.getElementById('userNameInput') as HTMLInputElement).value)} className="bg-sky-600 text-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl font-black text-2xl sm:text-3xl hover:bg-sky-700 shadow-xl">Start</button>
+            <input id="userNameInput" type="text" placeholder="Type name here..." className="w-full p-6 sm:p-8 rounded-2xl sm:rounded-3xl border-4 border-sky-300 bg-white focus:border-sky-600 text-2xl sm:text-3xl text-black font-bold outline-none shadow-inner" autoFocus />
+            <button onClick={() => handleOnboarding((document.getElementById('userNameInput') as HTMLInputElement).value)} className="bg-sky-600 text-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl font-black text-2xl sm:text-3xl hover:bg-sky-700 shadow-xl transition-transform active:scale-95">Let's Get Started</button>
           </div>
         </div>
       </div>
@@ -127,28 +144,32 @@ const App: React.FC = () => {
           <div className="space-y-6">
             <h2 className="text-3xl sm:text-4xl font-black text-slate-900 px-2">Memory Wall</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
-              {memories.map((m) => (
-                <div key={m.id} className="bg-white p-4 sm:p-6 rounded-[30px] sm:rounded-[40px] senior-card border-2 border-slate-100 shadow-lg">
-                  <img src={m.imageUrl} className="w-full aspect-video rounded-2xl sm:rounded-3xl object-cover mb-4" />
+              {memories.length > 0 ? memories.map((m) => (
+                <div key={m.id} className="bg-white p-4 sm:p-6 rounded-[30px] sm:rounded-[40px] senior-card border-2 border-slate-100 shadow-lg group">
+                  <div className="overflow-hidden rounded-2xl sm:rounded-3xl mb-4">
+                    <img src={m.imageUrl} className="w-full aspect-video object-cover transition-transform group-hover:scale-110 duration-700" alt={m.title} />
+                  </div>
                   <h3 className="text-xl sm:text-2xl font-black text-slate-900">{m.title}</h3>
                   <p className="text-slate-600 text-lg sm:text-xl leading-relaxed">{m.description}</p>
                 </div>
-              ))}
+              )) : (
+                <div className="col-span-full py-12 text-center text-slate-400 font-bold text-2xl">No memories yet.</div>
+              )}
             </div>
           </div>
         )}
         {appState === AppState.HISTORY && (
           <div className="space-y-6">
-            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 px-2">Past Chats</h2>
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 px-2">History</h2>
             <div className="bg-white rounded-[30px] sm:rounded-[40px] p-4 sm:p-8 senior-card border-2 border-slate-50">
               <div className="space-y-2 sm:space-y-4">
                 {[1, 2, 3].map(i => (
-                  <div key={i} className="flex justify-between items-center p-6 sm:p-8 border-b border-slate-100 hover:bg-slate-50 rounded-2xl sm:rounded-3xl cursor-pointer">
+                  <div key={i} className="flex justify-between items-center p-6 sm:p-8 border-b border-slate-100 hover:bg-slate-50 rounded-2xl sm:rounded-3xl cursor-pointer group transition-all">
                     <div className="max-w-[80%]">
-                      <p className="text-xl sm:text-2xl font-black text-slate-800">Feb {10 + i}</p>
-                      <p className="text-lg sm:text-xl text-slate-500 font-bold truncate">Stories about home.</p>
+                      <p className="text-xl sm:text-2xl font-black text-slate-800">Conversation from Feb {10 + i}</p>
+                      <p className="text-lg sm:text-xl text-slate-500 font-bold truncate">Stories about ${profile?.interests[0] || 'your home'}.</p>
                     </div>
-                    <div className="text-sky-600 font-black text-lg sm:text-xl">➔</div>
+                    <div className="text-sky-600 font-black text-lg sm:text-xl group-hover:translate-x-2 transition-transform">➔</div>
                   </div>
                 ))}
               </div>
@@ -157,25 +178,39 @@ const App: React.FC = () => {
         )}
         {appState === AppState.SETTINGS && (
           <div className="space-y-6 sm:space-y-8">
-            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 px-2">Accessibility</h2>
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 px-2">Preferences</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8">
               <div className="bg-white p-6 sm:p-8 rounded-[30px] sm:rounded-[40px] senior-card border-4 border-slate-100">
                 <h3 className="text-xl sm:text-2xl font-black mb-4 sm:mb-6">Text Size</h3>
                 <div className="flex flex-col gap-3">
                   {['standard', 'large', 'extra-large'].map((size) => (
-                    <button key={size} onClick={() => setSettings(s => ({...s, fontSize: size as any}))} className={`p-4 sm:p-6 rounded-xl sm:rounded-2xl border-2 sm:border-4 font-black text-xl sm:text-2xl capitalize ${settings.fontSize === size ? 'border-sky-600 bg-sky-50 text-sky-700' : 'border-slate-200'}`}>
-                      {size}
+                    <button key={size} onClick={() => setSettings(s => ({...s, fontSize: size as any}))} className={`p-4 sm:p-6 rounded-xl sm:rounded-2xl border-2 sm:border-4 font-black text-xl sm:text-2xl capitalize transition-all ${settings.fontSize === size ? 'border-sky-600 bg-sky-50 text-sky-700' : 'border-slate-200 hover:bg-slate-50'}`}>
+                      {size.replace('-', ' ')}
                     </button>
                   ))}
                 </div>
               </div>
               <div className="bg-white p-6 sm:p-8 rounded-[30px] sm:rounded-[40px] senior-card border-4 border-slate-100">
-                <h3 className="text-xl sm:text-2xl font-black mb-4 sm:mb-6">Colors</h3>
+                <h3 className="text-xl sm:text-2xl font-black mb-4 sm:mb-6">Display Mode</h3>
                 <div className="flex flex-col gap-3">
-                  <button onClick={() => setSettings(s => ({...s, contrast: 'normal'}))} className={`p-4 sm:p-6 rounded-xl sm:rounded-2xl border-2 sm:border-4 font-black text-xl sm:text-2xl ${settings.contrast === 'normal' ? 'border-sky-600 bg-sky-50 text-sky-700' : 'border-slate-200'}`}>Standard Blue</button>
-                  <button onClick={() => setSettings(s => ({...s, contrast: 'high'}))} className={`p-4 sm:p-6 rounded-xl sm:rounded-2xl border-2 sm:border-4 font-black text-xl sm:text-2xl ${settings.contrast === 'high' ? 'border-sky-600 bg-sky-50 text-sky-700' : 'border-slate-200'}`}>High Contrast</button>
+                  <button onClick={() => setSettings(s => ({...s, contrast: 'normal'}))} className={`p-4 sm:p-6 rounded-xl sm:rounded-2xl border-2 sm:border-4 font-black text-xl sm:text-2xl transition-all ${settings.contrast === 'normal' ? 'border-sky-600 bg-sky-50 text-sky-700' : 'border-slate-200 hover:bg-slate-50'}`}>Standard Colors</button>
+                  <button onClick={() => setSettings(s => ({...s, contrast: 'high'}))} className={`p-4 sm:p-6 rounded-xl sm:rounded-2xl border-2 sm:border-4 font-black text-xl sm:text-2xl transition-all ${settings.contrast === 'high' ? 'border-sky-600 bg-sky-50 text-sky-700' : 'border-slate-200 hover:bg-slate-50'}`}>High Contrast</button>
                 </div>
               </div>
+            </div>
+            {/* Account Management for Deployment */}
+            <div className="bg-slate-100 p-6 rounded-3xl text-center">
+              <button 
+                onClick={() => {
+                  if(confirm("Are you sure you want to sign out? This will clear your current local session data.")) {
+                    localStorage.removeItem(PROFILE_KEY);
+                    window.location.reload();
+                  }
+                }}
+                className="text-slate-500 font-bold hover:text-red-600"
+              >
+                Sign Out of This Device
+              </button>
             </div>
           </div>
         )}
@@ -185,9 +220,16 @@ const App: React.FC = () => {
               <div className="w-16 h-16 sm:w-24 sm:h-24 bg-red-600 text-white rounded-full mx-auto flex items-center justify-center mb-4 sm:mb-6 shadow-2xl">
                 <Icons.Alert />
               </div>
-              <h2 className="text-3xl sm:text-5xl font-black text-red-900 mb-2 sm:mb-4">Quick Help</h2>
-              <p className="text-lg sm:text-2xl text-red-700 font-bold mb-6 sm:mb-10">Press the button to notify your family.</p>
-              <button onClick={() => alert(`Calling family...`)} className="w-full bg-red-600 text-white py-8 sm:py-12 rounded-[20px] sm:rounded-[40px] font-black text-4xl sm:text-6xl hover:bg-red-700 shadow-2xl transition-all active:scale-95">SOS CALL</button>
+              <h2 className="text-3xl sm:text-5xl font-black text-red-900 mb-2 sm:mb-4">Need Help?</h2>
+              <p className="text-lg sm:text-2xl text-red-700 font-bold mb-6 sm:mb-10 leading-relaxed">Press the big button below and we will contact your family immediately.</p>
+              <button 
+                onClick={() => {
+                  alert(`Emergency SOS Triggered! Contacting ${profile?.emergencyContact?.name}...`);
+                }} 
+                className="w-full bg-red-600 text-white py-8 sm:py-12 rounded-[20px] sm:rounded-[40px] font-black text-4xl sm:text-6xl hover:bg-red-700 shadow-2xl transition-all active:scale-95 border-b-8 border-red-800"
+              >
+                SOS CALL
+              </button>
             </div>
           </div>
         )}
