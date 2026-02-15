@@ -88,10 +88,15 @@ npm run dev
    `npm run dev`
 
    Create a .env file with:
+   
    NEXT_PUBLIC_SUPABASE_URL=
+   
 SUPABASE_SERVICE_ROLE_KEY=
+
 OPENAI_API_KEY=
+
 http://localhost:3000
+
 📊 Hackathon Objectives Achieved
 
 Production-ready MVP implementation
