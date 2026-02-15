@@ -1,0 +1,8 @@
+{
+  "name": "GoldenYears AI Companion",
+  "description": "An immersive AI-powered mental health companion for seniors, featuring reminiscence therapy, emotional tracking, and voice-activated companionship.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
