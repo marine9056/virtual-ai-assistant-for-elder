@@ -1,11 +1,10 @@
 
-import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import { UserProfile } from "../types";
 
-const API_KEY = process.env.API_KEY || "";
-
+// Always use process.env.API_KEY directly in the constructor
 export const getGeminiResponse = async (prompt: string, userProfile?: UserProfile) => {
-  const ai = new GoogleGenAI({ apiKey: API_KEY });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   const systemContext = userProfile ? `
     You are 'Goldie', a warm, empathetic companion for a senior user named ${userProfile.name}.
@@ -27,7 +26,7 @@ export const getGeminiResponse = async (prompt: string, userProfile?: UserProfil
 };
 
 export const generateReminiscenceImage = async (memoryDescription: string) => {
-  const ai = new GoogleGenAI({ apiKey: API_KEY });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash-image',
     contents: {
@@ -51,7 +50,7 @@ export const generateReminiscenceImage = async (memoryDescription: string) => {
 };
 
 export const analyzeMood = async (text: string) => {
-  const ai = new GoogleGenAI({ apiKey: API_KEY });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: `Analyze the following senior user's sentiment: "${text}". Output numerical ratings for Joy, Engagement, and Energy (1-10).`,
