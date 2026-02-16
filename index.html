@@ -23,7 +23,6 @@
         body {
             font-family: 'Lexend', sans-serif;
             background-color: #f8fafc;
-            /* Prevent bounce scrolling on mobile devices for a more 'app-like' feel */
             overscroll-behavior-y: contain;
         }
         .senior-card {
@@ -37,11 +36,9 @@
             50% { transform: translateY(-10px); }
             100% { transform: translateY(0px); }
         }
-        /* High Contrast Accessibility Override */
         .contrast-high {
             filter: contrast(1.2) saturate(1.2);
         }
-        /* Scrollbar styling for a cleaner look */
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -61,6 +58,7 @@
         "react/": "https://esm.sh/react@^19.2.4/",
         "react": "https://esm.sh/react@^19.2.4",
         "@google/genai": "https://esm.sh/@google/genai@^1.41.0",
+        "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.48.1",
         "recharts": "https://esm.sh/recharts@^3.7.0"
       }
     }
@@ -68,7 +66,6 @@
 </head>
 <body>
     <div id="root"></div>
-    <!-- The ESM module entry point -->
     <script type="module" src="./index.tsx"></script>
 </body>
 </html>

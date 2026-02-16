@@ -6,9 +6,10 @@ interface DashboardProps {
   moodHistory: MoodData[];
   memories: MemoryEntry[];
   onStartCompanion: () => void;
+  onUpgrade: () => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ moodHistory, memories, onStartCompanion }) => {
+const Dashboard: React.FC<DashboardProps> = ({ moodHistory, memories, onStartCompanion, onUpgrade }) => {
   const latestMood = moodHistory[moodHistory.length - 1];
   
   const getMoodStatus = (score: number) => {
@@ -27,12 +28,20 @@ const Dashboard: React.FC<DashboardProps> = ({ moodHistory, memories, onStartCom
           <div className="text-center md:text-left flex-1 w-full">
             <h2 className="text-3xl sm:text-6xl font-black mb-2 sm:mb-4 leading-tight">Hello there!</h2>
             <p className="text-sky-100 text-xl sm:text-3xl mb-6 sm:mb-10 font-medium italic">"Shall we have a nice chat?"</p>
-            <button 
-              onClick={onStartCompanion}
-              className="w-full sm:w-auto bg-white text-sky-700 px-8 sm:px-16 py-4 sm:py-6 rounded-2xl sm:rounded-[35px] font-black text-2xl sm:text-4xl hover:bg-sky-50 transition-all shadow-xl active:scale-95"
-            >
-              Start Chatting
-            </button>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <button 
+                onClick={onStartCompanion}
+                className="bg-white text-sky-700 px-8 sm:px-12 py-4 sm:py-6 rounded-2xl sm:rounded-[35px] font-black text-2xl sm:text-3xl hover:bg-sky-50 transition-all shadow-xl active:scale-95"
+              >
+                Start Chatting
+              </button>
+              <button 
+                onClick={onUpgrade}
+                className="bg-amber-400 text-amber-900 px-8 sm:px-12 py-4 sm:py-6 rounded-2xl sm:rounded-[35px] font-black text-2xl sm:text-3xl hover:bg-amber-300 transition-all shadow-xl active:scale-95 border-b-4 border-amber-600"
+              >
+                Go Premium ⭐
+              </button>
+            </div>
           </div>
           <div className="hidden sm:flex w-32 h-32 sm:w-56 sm:h-56 bg-white/20 rounded-full items-center justify-center animate-float backdrop-blur-md border-4 border-white/30">
             <span className="text-5xl sm:text-9xl">😊</span>

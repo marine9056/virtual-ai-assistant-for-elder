@@ -4,11 +4,12 @@ import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import Companion from './components/Companion';
 import Routine from './components/Routine';
+import Checkout from './components/Checkout';
 import { AppState, UserProfile, MoodData, MemoryEntry, RoutineTask, Settings } from './types';
 import { Icons } from './constants';
+import { syncProfile, syncMemory } from './services/supabase';
 
 const App: React.FC = () => {
-  // Persistence Keys (Scoped to deployment)
   const PROFILE_KEY = 'goldie_profile_v1';
   const MEMORIES_KEY = 'goldie_memories_v1';
 
@@ -44,7 +45,6 @@ const App: React.FC = () => {
     const savedMemories = localStorage.getItem(MEMORIES_KEY);
     if (savedMemories) setMemories(JSON.parse(savedMemories));
 
-    // Support deep linking to companion via widget
     const urlParams = new URLSearchParams(window.location.search);
     if (profile) {
       if (urlParams.get('start') === 'chat') {
@@ -64,7 +64,7 @@ const App: React.FC = () => {
     setAppState(AppState.ONBOARDING);
   };
 
-  const handleOnboarding = (name: string) => {
+  const handleOnboarding = async (name: string) => {
     const newProfile: UserProfile = { 
       name: name || 'Friend', 
       age: 75, 
@@ -73,13 +73,22 @@ const App: React.FC = () => {
     };
     setProfile(newProfile);
     localStorage.setItem(PROFILE_KEY, JSON.stringify(newProfile));
+    
+    // SYNC TO SUPABASE
+    await syncProfile(newProfile);
+    
     setAppState(AppState.DASHBOARD);
   };
 
-  const handleMemoryGenerated = (memory: MemoryEntry) => {
+  const handleMemoryGenerated = async (memory: MemoryEntry) => {
     const updated = [memory, ...memories];
     setMemories(updated);
     localStorage.setItem(MEMORIES_KEY, JSON.stringify(updated));
+    
+    // SYNC TO SUPABASE
+    if (profile) {
+      await syncMemory(profile.name, memory);
+    }
   };
 
   const handleMoodAnalyzed = (mood: { joy: number, engagement: number, energy: number }) => {
@@ -87,7 +96,6 @@ const App: React.FC = () => {
     setMoodHistory(prev => [...prev.slice(1), { date: today, score: mood.joy, engagement: mood.engagement, energy: mood.energy }]);
   };
 
-  // Accessibility styling
   const fontSizeClass = settings.fontSize === 'extra-large' ? 'text-3xl' : settings.fontSize === 'large' ? 'text-2xl' : 'text-xl';
   const contrastClass = settings.contrast === 'high' ? 'bg-black text-yellow-400' : 'bg-slate-50 text-slate-900';
 
@@ -137,7 +145,8 @@ const App: React.FC = () => {
   return (
     <Layout activeState={appState} onNavigate={setAppState} userName={profile?.name} settings={settings}>
       <div className={`${fontSizeClass} ${settings.contrast === 'high' ? 'contrast-high' : ''} h-full`}>
-        {appState === AppState.DASHBOARD && <Dashboard moodHistory={moodHistory} memories={memories} onStartCompanion={() => setAppState(AppState.COMPANION)} />}
+        {appState === AppState.DASHBOARD && <Dashboard moodHistory={moodHistory} memories={memories} onStartCompanion={() => setAppState(AppState.COMPANION)} onUpgrade={() => setAppState(AppState.CHECKOUT)} />}
+        {appState === AppState.CHECKOUT && profile && <Checkout userProfile={profile} onCancel={() => setAppState(AppState.DASHBOARD)} onSuccess={() => setAppState(AppState.DASHBOARD)} />}
         {appState === AppState.COMPANION && <Companion userProfile={profile!} onMemoryGenerated={handleMemoryGenerated} onMoodAnalyzed={handleMoodAnalyzed} />}
         {appState === AppState.ROUTINE && <Routine tasks={routineTasks} onToggleTask={handleToggleRoutine} />}
         {appState === AppState.REMINISCENCE && (
@@ -167,7 +176,7 @@ const App: React.FC = () => {
                   <div key={i} className="flex justify-between items-center p-6 sm:p-8 border-b border-slate-100 hover:bg-slate-50 rounded-2xl sm:rounded-3xl cursor-pointer group transition-all">
                     <div className="max-w-[80%]">
                       <p className="text-xl sm:text-2xl font-black text-slate-800">Conversation from Feb {10 + i}</p>
-                      <p className="text-lg sm:text-xl text-slate-500 font-bold truncate">Stories about ${profile?.interests[0] || 'your home'}.</p>
+                      <p className="text-lg sm:text-xl text-slate-500 font-bold truncate">Stories about {profile?.interests[0] || 'your home'}.</p>
                     </div>
                     <div className="text-sky-600 font-black text-lg sm:text-xl group-hover:translate-x-2 transition-transform">➔</div>
                   </div>
@@ -191,26 +200,12 @@ const App: React.FC = () => {
                 </div>
               </div>
               <div className="bg-white p-6 sm:p-8 rounded-[30px] sm:rounded-[40px] senior-card border-4 border-slate-100">
-                <h3 className="text-xl sm:text-2xl font-black mb-4 sm:mb-6">Display Mode</h3>
-                <div className="flex flex-col gap-3">
-                  <button onClick={() => setSettings(s => ({...s, contrast: 'normal'}))} className={`p-4 sm:p-6 rounded-xl sm:rounded-2xl border-2 sm:border-4 font-black text-xl sm:text-2xl transition-all ${settings.contrast === 'normal' ? 'border-sky-600 bg-sky-50 text-sky-700' : 'border-slate-200 hover:bg-slate-50'}`}>Standard Colors</button>
-                  <button onClick={() => setSettings(s => ({...s, contrast: 'high'}))} className={`p-4 sm:p-6 rounded-xl sm:rounded-2xl border-2 sm:border-4 font-black text-xl sm:text-2xl transition-all ${settings.contrast === 'high' ? 'border-sky-600 bg-sky-50 text-sky-700' : 'border-slate-200 hover:bg-slate-50'}`}>High Contrast</button>
+                <h3 className="text-xl sm:text-2xl font-black mb-4 sm:mb-6">Cloud Sync</h3>
+                <div className="p-4 bg-emerald-50 rounded-2xl flex items-center gap-4 text-emerald-800 font-bold">
+                  <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
+                  Connected to Supabase
                 </div>
               </div>
-            </div>
-            {/* Account Management for Deployment */}
-            <div className="bg-slate-100 p-6 rounded-3xl text-center">
-              <button 
-                onClick={() => {
-                  if(confirm("Are you sure you want to sign out? This will clear your current local session data.")) {
-                    localStorage.removeItem(PROFILE_KEY);
-                    window.location.reload();
-                  }
-                }}
-                className="text-slate-500 font-bold hover:text-red-600"
-              >
-                Sign Out of This Device
-              </button>
             </div>
           </div>
         )}

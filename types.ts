@@ -48,5 +48,17 @@ export enum AppState {
   ROUTINE = 'ROUTINE',
   HISTORY = 'HISTORY',
   EMERGENCY = 'EMERGENCY',
-  SETTINGS = 'SETTINGS'
+  SETTINGS = 'SETTINGS',
+  CHECKOUT = 'CHECKOUT'
+}
+
+export interface Order {
+  first_name: string;
+  last_name: string;
+  email: string;
+  street_address: string;
+  city: string;
+  zip_code: string;
+  product_name: string;
+  total_amount: number;
 }
